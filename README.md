@@ -17,5 +17,6 @@ Una función que plotee la transformación del estado de polarización.
 
 Todo hacerlo numérico.
 
+Simular el experimento, luego simular el SU2 gadget 2QWP y HWP
 
 
