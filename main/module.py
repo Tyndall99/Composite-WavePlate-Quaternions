@@ -8,14 +8,15 @@ class Polarizacion:
         self.initial_state = kwargs.get("initial_state", [])
         self.materials = []
         self.states = [self.initial_state]
-    def add_material(self, theta_values, delta):
+        
+    def add_linear_wp(self, theta_values, delta_values):
         material = [
             np.quaternion(
-                np.sin(theta),
-                np.cos(delta),
-                np.sin(theta) * np.cos(delta),
-                np.sin(theta) - np.cos(delta)
-            ) for theta in theta_values]
+                np.cos(delta/2),
+                np.cos(theta) * np.sin(delta/2),
+                np.sin(theta) * np.sin(delta/2),
+                0
+            ) for theta, delta in zip(theta_values, delta_values)]
         
         self.materials.append(material)
     
@@ -23,28 +24,43 @@ class Polarizacion:
     def matrix_states(self):
         return quaternion.as_float_array(self.states)
     
+    def product(self):
+        return np.prod(self.materials)
+    
+    def equiv_prop(self):
+        q = self.product()
+        gamma = 2 * np.acos(q.w)
+        alpha = np.atan(q.y / q.x) / 2
+        chi = np.acos( np.sqrt((q.x**2 + q.y**2) / (1 - q.w**2)**2) / 2)
+        return [gamma, alpha, chi]
+        
+    def equiv_rot(self):
+        q = self.product()
+        phi =  2 * np.atan( q.z / q.w )
+        alpha = np.atan( (q.y * q.w + q.x * q.z) / (q.x * q.w - q.y * q.z) ) / 2
+        delta = 2 * np.asin( np.sqrt( q.x**2 + q.y**2 ) )
+        return [phi, alpha, delta]
+    
     def process(self):
         initial_state = self.states[0]
-        for material in self.materials:
-            emergent_state = [m*s*np.quaternion.conjugate(m) for m, s in zip(material, initial_state)]
-            self.states.append(emergent_state)
-            initial_state = emergent_state
+        emergent_state = [m*initial_state*np.quaternion.conjugate(m) for m in self.materials[0]]
+        self.states.append(emergent_state)
+
+n_data = 10
+delta_materials = np.linspace(0, 90, n_data)
+theta_materials = np.linspace(0, 45, n_data)
 
 
-n_data = 100
-delta_material1 = 0.2
-theta_material1 = np.linspace(0, 45, n_data)
-delta_material2 = -0.2
-theta_material2 = np.linspace(0, 45, n_data)
+#initial_state = [np.quaternion(1,1,1,1) for _ in range(n_data)]
 
-initial_state = [np.quaternion(1,1,1,1) for _ in range(n_data)]
+initial_state = [np.quaternion(0,1,0,0)]
 
 obj = Polarizacion(initial_state=initial_state)
 
-obj.add_material(theta_material1, delta_material1)
-obj.add_material(theta_material2, delta_material2)
+obj.add_linear_wp(theta_materials, delta_materials)
 
-obj.process()
+#obj.process()
 print(obj.initial_state)
 print(obj.materials)
-print(obj.matrix_states[0].T)
+print(obj.producat())
+#print(obj.matrix_states[0].T)
