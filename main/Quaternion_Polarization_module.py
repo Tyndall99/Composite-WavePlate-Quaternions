@@ -9,9 +9,16 @@ np.seterr(divide='ignore', invalid='ignore')
 
 class State(np.quaternion):
 
-    def quaternion2angles(Quaternion = np.quaternion(1, 1, 0, 0)):
-        pass
+    def quaternion2angles(Quaternion):
+        """
+        Static method from State class. 
+        It recieves a the representation of a polarization state as a quaternion
+        and retrieves the angles "alpha" and "chi" of the associated polarization ellipse
+        """
+        chi = np.arcsin(round(Quaternion.z, 3)) / 2
+        alpha = np.arcsin(round(Quaternion.y, 3) / np.cos(2*round(chi, 3))) / 2
 
+        return np.rad2deg(alpha), np.rad2deg(chi)
 
     def __init__(self, alpha = 0, chi = 0):
         '''
@@ -36,15 +43,29 @@ class State(np.quaternion):
         This function operates, through the quaternion product, the polarization state
         by an operator or a list of operators (another quaternions as Waveplates, Rotators
         or Composite Waveplates) 
+
+        It retrieves the transformed State due to the operator or a list of transformed states due
+        to the list of operators.
         '''
         if np.size(operator) > 1:
+
             transformed_states = []
+            
             for element in operator:
-                transformed_states.append(element*self*np.quaternion.conjugate(element))
+            
+                new_element = element*self*np.quaternion.conjugate(element)
+                new_alpha, new_chi = State.quaternion2angles(new_element)
+                new_state = State(new_alpha, new_chi)
+                transformed_states.append(new_state)
+            
             return transformed_states
+        
         else:
-            transformed_state = operator*self*np.quaternion.conjugate(operator)
-            return transformed_state     
+        
+            _new_state = operator*self*np.conjugate(operator)
+            _new_alpha, _new_chi = State.quaternion2angles(_new_state)
+
+            return State(_new_alpha, _new_chi)
     
     def ellipse(self):
         '''
@@ -110,15 +131,24 @@ class Waveplate(np.quaternion):
         '''
         This function operates, through the quaternion product, the operator of the waveplate with respect
         to an initial State or a list of initial States.
+
+        It retrieves the transformed State due to the operator or a list of transformed states due to the
+        operator.
         '''
         if np.size(state) > 1:
+
             transformed_states = []
+            
             for element in state:
-                transformed_states.append(self*element*np.quaternion.conjugate(self))
+                new_state = self*element*np.quaternion.conjugate(self)
+                new_alpha, new_chi = State.quaternion2angles(new_state)
+                transformed_states.append(State(new_alpha, new_chi))
+            
             return transformed_states
         else:
-            transformed_state = self*state*np.quaternion.conjugate(self)
-            return transformed_state
+            _new_state = self*state*np.conjugate(self)
+            _new_alpha, _new_chi = State.quaternion2angles(_new_state)
+            return State(_new_alpha, _new_chi)
 
 class Qwp(Waveplate):
     
@@ -332,7 +362,7 @@ def Graphic(State):
         s3 = State.z
 
 
-    ax.scatter(s1, s2, s3, color='red', alpha = 1, s=20)
+    ax.scatter(s1, s2, s3, color='red', alpha = 1, s=30)
 
     #Configure the image
     fig.set_size_inches(9, 9)
@@ -350,5 +380,3 @@ def Graphic(State):
     ax.text(0, 0, 1.15, '$S_3$', fontsize=18)
         
     plt.show()
-    
-
