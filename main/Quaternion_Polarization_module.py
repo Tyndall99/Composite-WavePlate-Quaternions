@@ -53,7 +53,7 @@ class State(np.quaternion):
             
             for element in operator:
             
-                new_element = element*self*np.quaternion.conjugate(element)
+                new_element = element * self * np.quaternion.conjugate(element)
                 new_alpha, new_chi = State.quaternion2angles(new_element)
                 new_state = State(new_alpha, new_chi)
                 transformed_states.append(new_state)
@@ -62,7 +62,7 @@ class State(np.quaternion):
         
         else:
         
-            _new_state = operator*self*np.conjugate(operator)
+            _new_state = operator * self * np.conjugate(operator)
             _new_alpha, _new_chi = State.quaternion2angles(_new_state)
 
             return State(_new_alpha, _new_chi)
@@ -200,7 +200,7 @@ class Composite_waveplate(Waveplate):
         
         return dict
 
-    def jones_caracterization(quaternions):
+    def jones_characterization(quaternions):
         q = Composite_waveplate.product(quaternions)
         
         phi =  2 * ( np.pi/2 - np.arctan2( round(q.w, 3) , round(q.z, 3) ))
@@ -228,10 +228,10 @@ class Composite_waveplate(Waveplate):
                        (self.caracterization()['General_caracterization']['alpha'], 
                         self.caracterization()['General_caracterization']['chi']))
         
-    def caracterization(self):
-        caracterization = {'Jones_Theorem': Composite_waveplate.jones_caracterization(self.waveplates),
+    def characterization(self):
+        characterization = {'Jones_Theorem': Composite_waveplate.jones_characterization(self.waveplates),
             'General_caracterization': Composite_waveplate.equivalent(self.waveplates)}
-        return caracterization
+        return characterization
 
     def add_wp(self, waveplate):
         self.waveplates.append(waveplate)
