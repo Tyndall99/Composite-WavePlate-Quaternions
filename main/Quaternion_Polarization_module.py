@@ -15,8 +15,8 @@ class State(np.quaternion):
         It recieves a the representation of a polarization state as a quaternion
         and retrieves the angles "alpha" and "chi" of the associated polarization ellipse
         """
-        chi = np.arcsin(round(Quaternion.z, 3)) / 2
-        alpha = np.arcsin(round(Quaternion.y, 3) / np.cos(2*round(chi, 3))) / 2
+        chi = np.arcsin(round(Quaternion.z, 5)) / 2
+        alpha = np.arcsin(round(Quaternion.y, 5) / np.cos(2*round(chi, 3))) / 2
 
         return np.rad2deg(alpha), np.rad2deg(chi)
 
@@ -177,22 +177,22 @@ class Rotation(np.quaternion):
 class Composite_waveplate(Waveplate):
 
     def product(quaternions):
-        return np.prod(quaternions)
+        return np.prod(quaternions[::-1])
     
     def equivalent(quaternions):
         q = Composite_waveplate.product(quaternions)
         
         #Esta definición da el angulo negativo, posiblemente por la funcion arccos
-        gamma =  2*np.arccos(round(q.w, 3))
+        gamma =  2*np.arccos(round(q.w, 5))
         #Se uso esta otra identidad y da correcto con el arcsin
         #gamma = 2*np.arcsin(np.sqrt(1-q.w**2))
     
-        alpha = np.arctan2(round(q.y, 3) , round(q.x, 3)) / 2
+        alpha = np.arctan2(round(q.y, 5) , round(q.x, 5)) / 2
         
-        if 1 - round(q.w, 3)**2 == 0:
+        if 1 - round(q.w, 5)**2 == 0:
             chi = np.pi/4
         else: 
-            chi = np.arccos( np.sqrt((round(q.x, 3)**2 + round(q.y, 3)**2) / (1 - round(q.w, 3)**2))) / 2.
+            chi = np.arccos( np.sqrt((round(q.x, 5)**2 + round(q.y, 5)**2) / (1 - round(q.w, 5)**2))) / 2.
         
         dict = {'gamma': np.rad2deg(gamma), 
                 'alpha': np.rad2deg(alpha), 
@@ -203,11 +203,11 @@ class Composite_waveplate(Waveplate):
     def jones_characterization(quaternions):
         q = Composite_waveplate.product(quaternions)
         
-        phi =  2 * ( np.pi/2 - np.arctan2( round(q.w, 3) , round(q.z, 3) ))
+        phi =  2 * ( np.pi/2 - np.arctan2( round(q.w, 5) , round(q.z, 5) ))
         
-        alpha = (np.arctan2(round(q.y, 3), round(q.x, 3)) + phi/2) / 2
+        alpha = (( np.pi/2 - np.arctan2( round(q.x, 5) , round(q.y, 5) )) + phi/2) / 2
         
-        delta = 2 * np.arcsin( np.sqrt( round(q.x, 3)**2 + round(q.y, 3)**2 ) )
+        delta = 2 * np.arcsin( np.sqrt( round(q.x, 5)**2 + round(q.y, 5)**2 ) )
         
         #delta =  2 * np.arccos( np.sqrt( q.w**2 + q.z**2 ) )
         
@@ -223,14 +223,14 @@ class Composite_waveplate(Waveplate):
         self.main_angles = np.array([wp.angle for wp in self.waveplates])
         self.eigenstates = np.array([wp.eigenstate for wp in self.waveplates])
         self.equiv_waveplate = Composite_waveplate.product(self.waveplates)
-        super().__init__(self.caracterization()['General_caracterization']['gamma'],
+        super().__init__(self.characterization()['General_characterization']['gamma'],
                        0, 
-                       (self.caracterization()['General_caracterization']['alpha'], 
-                        self.caracterization()['General_caracterization']['chi']))
+                       (self.characterization()['General_characterization']['alpha'], 
+                        self.characterization()['General_characterization']['chi']))
         
     def characterization(self):
         characterization = {'Jones_Theorem': Composite_waveplate.jones_characterization(self.waveplates),
-            'General_caracterization': Composite_waveplate.equivalent(self.waveplates)}
+            'General_characterization': Composite_waveplate.equivalent(self.waveplates)}
         return characterization
 
     def add_wp(self, waveplate):
